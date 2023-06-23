@@ -148,7 +148,6 @@ export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
 CORES="$(nproc --all)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-DATE="$(date +%H.%M-%d.%m)"
 
 # Function for uploaded kernel file
 function push() {
@@ -203,11 +202,11 @@ make -j"$CORES" ARCH=$ARCH O=out \
 function zipping() {
     cd ${AnyKernelPath} || exit 1
     sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME}-${SUBLEVEL}-${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
-    zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
+    zip -r9 ${KERNEL_NAME}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
     cd ..
     mkdir -p builds
     zipname="$(basename $(echo ${AnyKernelPath}/*.zip | sed "s/.zip//g"))"
-    cp ${AnyKernelPath}/*.zip ./builds/${zipname}-$DATE.zip
+    cp ${AnyKernelPath}/*.zip ./builds/${zipname}.zip
 }
 
 # Cleanup function
