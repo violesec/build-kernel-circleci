@@ -44,6 +44,10 @@ jobs:
             cd $CIRCLE_WORKING_DIRECTORY/kernel
             wget https://raw.githubusercontent.com/MrErenK/build-kernel-circleci/main/config.env
             wget https://raw.githubusercontent.com/MrErenK/build-kernel-circleci/main/kranul-build.sh && chmod +x ./kranul-build.sh
+            echo "Building non kernelsu kernel"
+            ./kranul-build.sh
+            echo "Building kernelsu kernel"
+            sed -i "s/^KERNELSU=no/KERNELSU=yes/g" config.env
             ./kranul-build.sh
       - run:
           name: Upload

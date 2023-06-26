@@ -143,22 +143,11 @@ export DEVICE_DEFCONFIG="begonia_user_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_USER="EreN"
 export KBUILD_BUILD_HOST="kernel"
-export KERNEL_NAME="GCamFix-kernel"
+export KERNEL_NAME="$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
 export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
 CORES="$(nproc --all)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-
-# Function for uploaded kernel file
-function push() {
-  if [ "${SEND_ANNOUNCEMENT}" = "yes" ];then
-    echo ""
-  else
-    if [ "$CLEANUP" = "yes" ];then
-      cleanup
-    fi
-  fi
-}
 
 # Start Compile
 START=$(date +"%s")
@@ -190,7 +179,7 @@ make -j"$CORES" ARCH=$ARCH O=out \
       git clone --depth=1 https://github.com/Neebe3289/AnyKernel3 -b begonia-r-oss ${AnyKernelPath}
       cp $IMAGE ${AnyKernelPath}
    else
-      echo "<i> ❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!</i>"
+      echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
       if [ "$CLEANUP" = "yes" ];then
         cleanup
       fi
@@ -201,12 +190,16 @@ make -j"$CORES" ARCH=$ARCH O=out \
 # Zipping function
 function zipping() {
     cd ${AnyKernelPath} || exit 1
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME}-${SUBLEVEL}-${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
-    zip -r9 ${KERNEL_NAME}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
+    if [ "$KERNELSU" = "yes" ];then
+      sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
+    else
+      sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
+    fi
+    zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
     cd ..
     mkdir -p builds
     zipname="$(basename $(echo ${AnyKernelPath}/*.zip | sed "s/.zip//g"))"
-    cp ${AnyKernelPath}/*.zip ./builds/${zipname}.zip
+    cp ${AnyKernelPath}/*.zip ./builds/${zipname}-$DATE.zip
 }
 
 # Cleanup function
@@ -235,8 +228,8 @@ function kernelsu() {
 
 getclang
 updateclang
+kernelsu
 compile
 zipping
 END=$(date +"%s")
 DIFF=$(($END - $START))
-push
