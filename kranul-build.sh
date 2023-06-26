@@ -200,6 +200,7 @@ function zipping() {
     mkdir -p builds
     zipname="$(basename $(echo ${AnyKernelPath}/*.zip | sed "s/.zip//g"))"
     cp ${AnyKernelPath}/*.zip ./builds/${zipname}-$DATE.zip
+    cleanup
 }
 
 # Cleanup function
