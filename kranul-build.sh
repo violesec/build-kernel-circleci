@@ -51,7 +51,7 @@ function getclang() {
       ClangPath="${MainClangPath}"-neutron
       export PATH="${ClangPath}/bin:${PATH}"
       cd ${ClangPath}
-      curl -LO "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+      curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
       chmod +x antman && ./antman -S
       ./antman --patch=glibc
       cd ..
@@ -76,7 +76,7 @@ function getclang() {
       echo "[!] Clang is set to zyc, cloning it..."
       mkdir -p ${MainClangPath}-zyc
       cd clang-zyc
-      wget -q $(curl https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
+      wget -q $(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
       tar -xf zyc-clang.tar.gz
       ClangPath="${MainClangPath}"-zyc
       export PATH="${ClangPath}/bin:${PATH}"
@@ -112,11 +112,11 @@ function updateclang() {
     elif [ "${ClangName}" = "zyc" ]; then
       echo "[!] Clang is set to zyc, checking for updates..."
       cd clang-zyc
-      ZycLatest="$(curl https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt)"
+      ZycLatest="$(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt)"
       if [ "$(cat README.md | grep "Build Date : " | cut -d: -f2 | sed "s/ //g")" != "${ZycLatest}" ];then
         echo "[!] An update have been found, updating..."
         sudo rm -rf ./*
-        wget -q $(curl https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
+        wget -q $(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
         tar -xf zyc-clang.tar.gz
         rm -f zyc-clang.tar.gz
       else
@@ -176,7 +176,7 @@ make -j"$CORES" ARCH=$ARCH O=out \
    if [[ -f "$IMAGE" ]]; then
       cd ${MainPath}
       cp out/.config arch/${ARCH}/configs/${DEVICE_DEFCONFIG} && git add arch/${ARCH}/configs/${DEVICE_DEFCONFIG} && git commit -m "defconfig: Regenerate"
-      git clone --depth=1 https://github.com/Neebe3289/AnyKernel3 -b begonia-r-oss ${AnyKernelPath}
+      git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
       cp $IMAGE ${AnyKernelPath}
    else
       echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
@@ -214,16 +214,13 @@ function cleanup() {
 function kernelsu() {
     if [ "$KERNELSU" = "yes" ];then
       KERNEL_VARIANT="${KERNEL_VARIANT}-KernelSU"
-      KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
       if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
         cd ${MainPath}
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        echo "CONFIG_KPROBES=y" >> arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
-        echo "CONFIG_HAVE_KPROBES=y" >> arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
-        echo "CONFIG_KPROBE_EVENTS=y" >> arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
-        echo "CONFIG_OVERLAY_FS=y" >> arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
+        curl -LSsk "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        git apply KSU.patch
       fi
-      sudo rm -rf KernelSU && git clone https://github.com/tiann/KernelSU
+      KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
+      git submodule update --init; cd ${MainPath}/KernelSU; git pull origin main; cd ..
     fi
 }
 

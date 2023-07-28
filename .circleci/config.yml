@@ -6,6 +6,9 @@ jobs:
     resource_class: large
 
     steps:
+      environment:
+        KERNEL_REPO: https://github.com/xiaomi-begonia-dev/android_kernel_xiaomi_mt6785
+        KERNEL_BRANCH: aosp-13
       - run:
           name: Setup packages
           command: |
@@ -16,7 +19,6 @@ jobs:
             libssl-dev libxml2-utils android-sdk-libsparse-utils lld zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
             lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig ca-certificates bc cpio imagemagick \
             bsdmainutils lz4 aria2 rclone ssh-client libncurses5 libssl-dev rsync schedtool python-is-python3 libarchive-tools python3
-
       - run:
           name: Setup ccache
           command: |
@@ -35,19 +37,17 @@ jobs:
           name: Clone kernel repo
           command: |
             cd $CIRCLE_WORKING_DIRECTORY
-            git config --global user.name "test"
-            git config --global user.email "testest19824981294@gmail.com"
-            git clone https://github.com/MrErenK/android_kernel_xiaomi_mt6785 -b rebase --depth=500 kernel
+            git config --global user.name "${CIRCLE_PROJECT_USERNAME}"
+            git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
+            git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
       - run:
           name: Build
           command: |
             cd $CIRCLE_WORKING_DIRECTORY/kernel
             wget https://raw.githubusercontent.com/MrErenK/build-kernel-circleci/main/config.env
             wget https://raw.githubusercontent.com/MrErenK/build-kernel-circleci/main/kranul-build.sh && chmod +x ./kranul-build.sh
-            echo "Building non kernelsu kernel"
-            ./kranul-build.sh
-            echo "Building kernelsu kernel"
-            sed -i "s/^KERNELSU=no/KERNELSU=yes/g" config.env
+            wget https://raw.githubusercontent.com/MrErenK/build-kernel-circleci/main/KSU.patch
+            echo "Building kernel"
             ./kranul-build.sh
       - run:
           name: Upload
