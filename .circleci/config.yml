@@ -6,9 +6,6 @@ jobs:
     resource_class: large
 
     steps:
-      environment:
-        KERNEL_REPO: https://github.com/xiaomi-begonia-dev/android_kernel_xiaomi_mt6785
-        KERNEL_BRANCH: aosp-13
       - run:
           name: Setup packages
           command: |
@@ -40,6 +37,9 @@ jobs:
             git config --global user.name "${CIRCLE_PROJECT_USERNAME}"
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
+          environment:
+            KERNEL_REPO: https://github.com/xiaomi-begonia-dev/android_kernel_xiaomi_mt6785
+            KERNEL_BRANCH: aosp-13
       - run:
           name: Build
           command: |
