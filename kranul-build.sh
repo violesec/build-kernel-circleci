@@ -137,12 +137,12 @@ function updateclang() {
 }
 
 # Enviromental variable
-DEVICE_MODEL="Redmi Note 8 Pro"
-DEVICE_CODENAME="begonia"
-export DEVICE_DEFCONFIG="begonia_user_defconfig"
+DEVICE_MODEL="Redmi 9"
+DEVICE_CODENAME="lancelot"
+export DEVICE_DEFCONFIG="lancelot_defconfig"
 export ARCH="arm64"
-export KBUILD_BUILD_USER="EreN"
-export KBUILD_BUILD_HOST="kernel"
+export KBUILD_BUILD_USER="Orkun"
+export KBUILD_BUILD_HOST="CI"
 export KERNEL_NAME="$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
 export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
@@ -217,7 +217,7 @@ function kernelsu() {
       if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
         cd ${MainPath}
         curl -LSsk "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        git apply KSU.patch
+        sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
       fi
       KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
       git submodule update --init; cd ${MainPath}/KernelSU; git pull origin main; cd ..
