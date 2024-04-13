@@ -37,7 +37,9 @@ function getclang() {
       ClangPath="${MainClangPath}"-azure
       export PATH="${ClangPath}/bin:${PATH}"
       cd ${ClangPath}
-      wget "https://gist.github.com/dakkshesh07/240736992abf0ea6f0ee1d8acb57a400/raw/a835c3cf8d99925ca33cec3b210ee962904c9478/patch-for-old-glibc.sh" -O patch.sh && chmod +x patch.sh && ./patch.sh
+      curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+      chmod +x antman
+      ./antman --patch=glibc
       cd ..
     else
       echo "[!] Clang already exists. Skipping..."
@@ -66,6 +68,11 @@ function getclang() {
       git clone https://github.com/kdrag0n/proton-clang clang-proton --depth=1
       ClangPath="${MainClangPath}"-proton
       export PATH="${ClangPath}/bin:${PATH}"
+      cd ${ClangPath}
+      curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+      chmod +x antman
+      ./antman --patch=glibc
+      cd ..
     else
       echo "[!] Clang already exists. Skipping..."
       ClangPath="${MainClangPath}"-proton
@@ -78,9 +85,12 @@ function getclang() {
       cd clang-zyc
       wget -q $(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
       tar -xf zyc-clang.tar.gz
+      curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+      chmod +x antman
+      ./antman --patch=glibc
+      rm -f zyc-clang.tar.gz
       ClangPath="${MainClangPath}"-zyc
       export PATH="${ClangPath}/bin:${PATH}"
-      rm -f zyc-clang.tar.gz
       cd ..
     else
       echo "[!] Clang already exists. Skipping..."
