@@ -39,7 +39,7 @@ jobs:
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
           environment:
             KERNEL_REPO: https://GitLab.com/MT6768Lab/KernelTree.git
-            KERNEL_BRANCH: 13
+            KERNEL_BRANCH: 14
       - run:
           name: Build
           command: |
