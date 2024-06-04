@@ -226,7 +226,7 @@ function kernelsu() {
       KERNEL_VARIANT="${KERNEL_VARIANT}-KernelSU"
       if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
         cd ${MainPath}
-        curl -LSsk "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        curl -LSsk "https://raw.githubusercontent.com/orkunergun/KernelSU/main/kernel/setup.sh" | bash -s v0.9.6
         sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
       fi
       KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
