@@ -78,6 +78,25 @@ function getclang() {
       ClangPath="${MainClangPath}"-proton
       export PATH="${ClangPath}/bin:${PATH}"
     fi
+  elif [ "${ClangName}" = "lilium" ]; then
+    if [ ! -f "${MainClangPath}-lilium/bin/clang" ]; then
+      echo "[!] Clang is set to lilium, cloning it..."
+      mkdir -p ${MainClangPath}-lilium
+      cd clang-lilium
+      wget https://github.com/liliumproject/clang/releases/download/20240623/lilium_clang-20240623.tar.gz
+      tar -xf lilium_clang*.tar.gz
+      curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+      chmod +x antman
+      ./antman --patch=glibc
+      rm -f lilium_clang*.tar.gz
+      ClangPath="${MainClangPath}"-lilium
+      export PATH="${ClangPath}/bin:${PATH}"
+      cd ..
+    else
+      echo "[!] Clang already exists. Skipping..."
+      ClangPath="${MainClangPath}"-lilium
+      export PATH="${ClangPath}/bin:${PATH}"
+    fi
   elif [ "${ClangName}" = "zyc" ]; then
     if [ ! -f "${MainClangPath}-zyc/bin/clang" ]; then
       echo "[!] Clang is set to zyc, cloning it..."
