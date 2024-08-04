@@ -52,5 +52,5 @@ jobs:
           name: Upload
           command: |
             cd $CIRCLE_WORKING_DIRECTORY/kernel
-            wget https://raw.githubusercontent.com/As9124k82134/pdup/master/pdup && chmod +x pdup
-            ./pdup builds/*.zip
+            wget https://github.com/Sushrut1101/GoFile-Upload/raw/master/upload.sh && chmod +x upload.sh
+            ./upload.sh builds/*.zip
