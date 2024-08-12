@@ -44,8 +44,8 @@ jobs:
           name: Build
           command: |
             cd $CIRCLE_WORKING_DIRECTORY/kernel
-            wget https://raw.githubusercontent.com/orkunergun/build-kernel-circleci/main/config.env
-            wget https://raw.githubusercontent.com/orkunergun/build-kernel-circleci/main/kranul-build.sh && chmod +x ./kranul-build.sh
+            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
+            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/kranul-build.sh && chmod +x ./kranul-build.sh
             echo "Building kernel"
             ./kranul-build.sh
       - run:
