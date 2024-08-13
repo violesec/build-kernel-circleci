@@ -129,7 +129,6 @@ function compile_kernel() {
     echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
     if [ "$CLEANUP" = "yes" ];then
       cleanup
-      console.log("❌ Cleaned up!")
     fi
     exit 1
   fi
@@ -140,12 +139,12 @@ function zip_kernel() {
   cd "${AnyKernelPath}" || exit 1
 
   if [ "$KERNELSU" = "yes" ];then
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
+    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
   else
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
+    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
   fi
 
-  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
+  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${KERNEL_SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
   cd ..
   mkdir -p builds
   zipname="$(basename $(echo ${AnyKernelPath}/*.zip | sed "s/.zip//g"))"
@@ -157,7 +156,6 @@ function cleanup() {
   cd "${MainPath}"
   sudo rm -rf "${AnyKernelPath}"
   sudo rm -rf out/
-  console.log("✅ Cleaned up!")
 }
 
 # Main script
