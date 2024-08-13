@@ -38,7 +38,7 @@ jobs:
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
           environment:
-            KERNEL_REPO: https://GitLab.com/MT6768Lab/KernelTree.git
+            KERNEL_REPO: https://github.com/violesec/android_kernel_xiaomi_mt6768_suichan.git
             KERNEL_BRANCH: 14
       - run:
           name: Build
@@ -49,7 +49,7 @@ jobs:
             echo "Building kernel"
             ./kranul-build.sh
       - run:
-          name: Upload
+          name: Upload Build Artifacts to GoFile
           command: |
             cd $CIRCLE_WORKING_DIRECTORY/kernel
             wget https://github.com/Sushrut1101/GoFile-Upload/raw/master/upload.sh && chmod +x upload.sh
