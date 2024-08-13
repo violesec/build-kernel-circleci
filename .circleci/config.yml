@@ -6,7 +6,6 @@ jobs:
     resource_class: large
 
     steps:
-      - checkout
       - run:
           name: Setup packages
           command: |
