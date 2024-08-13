@@ -11,6 +11,8 @@ CrossCompileFlagTriple="aarch64-linux-gnu-"
 CrossCompileFlag64="aarch64-linux-gnu-"
 CrossCompileFlag32="arm-linux-gnueabi-"
 
+export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
+
 # Clone or update toolchain
 function clone_or_update_clang() {
   local CLANG_NAME=$1
