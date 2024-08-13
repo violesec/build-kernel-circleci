@@ -31,11 +31,11 @@ jobs:
             ccache -M 20G
             ccache -z
       - run:
-        name: Setup environment
-        command: |
-          cd $CIRCLE_WORKING_DIRECTORY
-          wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
-          source config.env
+          name: Setup environment
+          command: |
+            cd $CIRCLE_WORKING_DIRECTORY
+            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
+            source config.env
       - run:
           name: Test environment variables are set
           command: |
