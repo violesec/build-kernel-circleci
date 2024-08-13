@@ -120,15 +120,16 @@ function compile_kernel() {
     CROSS_COMPILE=${CrossCompileFlag64} \
     CROSS_COMPILE_ARM32=${CrossCompileFlag32}
 
-  if [[ -f "$IMAGE" ]]; then
+  if [[ -f "$KERNEL_IMAGE" ]]; then
     cd "${MainPath}"
     cp out/.config "arch/${ARCH}/configs/${DEVICE_DEFCONFIG}" && git add "arch/${ARCH}/configs/${DEVICE_DEFCONFIG}" && git commit -m "defconfig: Regenerate"
     git clone --depth=1 "${AnyKernelRepo}" -b "${AnyKernelBranch}" "${AnyKernelPath}"
-    cp "$IMAGE" "${AnyKernelPath}"
+    cp "$KERNEL_IMAGE" "${AnyKernelPath}"
   else
     echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
     if [ "$CLEANUP" = "yes" ];then
       cleanup
+      console.log("❌ Cleaned up!")
     fi
     exit 1
   fi
@@ -156,6 +157,7 @@ function cleanup() {
   cd "${MainPath}"
   sudo rm -rf "${AnyKernelPath}"
   sudo rm -rf out/
+  console.log("✅ Cleaned up!")
 }
 
 # Main script
