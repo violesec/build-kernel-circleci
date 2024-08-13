@@ -121,6 +121,12 @@ function kernelsu() {
   fi
 }
 
+# Export variables
+export KERNEL_MAJOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "VERSION =" | sed 's/VERSION = *//g')
+export KERNEL_MINOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "PATCHLEVEL =" | sed 's/PATCHLEVEL = *//g')
+export KERNEL_SUBLEVEL_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')
+export KERNEL_VERSION="${KERNEL_MAJOR_VERSION}.${KERNEL_MINOR_VERSION}.${KERNEL_SUBLEVEL_VERSION}"
+
 # Compile kernel
 function compile_kernel() {
   local CORES=$(nproc --all)
