@@ -123,33 +123,32 @@ function compile_kernel() {
     CROSS_COMPILE=${CrossCompileFlag64} \
     CROSS_COMPILE_ARM32=${CrossCompileFlag32}
 
-    if [[ -f "$KERNEL_IMAGE" ]]; then
-      cd ${MainPath}
-      git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-      cp $KERNEL_IMAGE ${AnyKernelPath}
-    else
-      echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
-      if [ "$CLEANUP" = "yes" ];then
-        cleanup
-      fi
-      exit 1
-    fi
+    # if [[ -f "$KERNEL_IMAGE" ]]; then
+    #   cd ${MainPath}
+    #   git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
+    #   cp $KERNEL_IMAGE ${AnyKernelPath}
+    # else
+    #   echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
+    #   if [ "$CLEANUP" = "yes" ];then
+    #     cleanup
+    #   fi
+    #   exit 1
+    # fi
 }
 
-# function regenerate_config(){
-#   if [[ -f "$KERNEL_IMAGE" && "$REGENERATE_CONFIG" = "yes" ]]; then
-#     cd "${MainPath}"
-#     cp out/.config "arch/${ARCH}/configs/${DEVICE_DEFCONFIG}" && git add "arch/${ARCH}/configs/${DEVICE_DEFCONFIG}" && git commit -m "defconfig: Regenerate"
-#     git clone --depth=1 "${AnyKernelRepo}" -b "${AnyKernelBranch}" "${AnyKernelPath}"
-#     cp "$KERNEL_IMAGE" "${AnyKernelPath}"
-#   else
-#     echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
-#     if [ "$CLEANUP" = "yes" ];then
-#       cleanup
-#     fi
-#     exit 1
-#   fi
-# }
+function get_anykernel() {
+  if [[ -f "$KERNEL_IMAGE" ]]; then
+    cd ${MainPath}
+    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
+    cp $KERNEL_IMAGE ${AnyKernelPath}
+  else
+    echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
+    if [ "$CLEANUP" = "yes" ];then
+      cleanup
+    fi
+    exit 1
+  fi
+}
 
 # Zip kernel
 function zip_kernel() {
@@ -182,6 +181,7 @@ function main() {
   set_defconfig
   kernelsu
   compile_kernel
+  get_anykernel
   zip_kernel
   cleanup
 }
