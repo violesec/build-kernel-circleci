@@ -122,7 +122,35 @@ function compile_kernel() {
     CROSS_COMPILE=${CrossCompileFlag64} \
     CROSS_COMPILE_ARM32=${CrossCompileFlag32}
 
-  if [[ -f "$KERNEL_IMAGE" ]]; then
+  if [[ -f "out/arch/$ARCH/boot/Image.gz-dtb" ]]; then
+    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.gz-dtb"
+    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
+  elif [[ -f "out/arch/$ARCH/boot/Image.gz" ]]; then
+    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.gz"
+    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
+  elif [[ -f "out/arch/$ARCH/boot/Image" ]]; then
+    KERNEL_IMAGE="out/arch/$ARCH/boot/Image"
+    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
+  elif [[ -f "out/arch/$ARCH/boot/Image.lz4" ]]; then
+    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.lz4"
+    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
+  elif [[ -f "out/arch/$ARCH/boot/Image.lz4-dtb" ]]; then
+    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.lz4-dtb"
+    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
+  elif [[ -f "out/arch/$ARCH/boot/Image.lz4-dtb" ]]; then
+    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.lz4-dtb"
+    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
+  else
+    echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
+    if [ "$CLEANUP" = "yes" ];then
+      cleanup
+    fi
+    exit 1
+  fi
+}
+
+function regenerate_config(){
+  if [[ -f "$KERNEL_IMAGE" && "$REGENERATE_CONFIG" = "yes" ]]; then
     cd "${MainPath}"
     cp out/.config "arch/${ARCH}/configs/${DEVICE_DEFCONFIG}" && git add "arch/${ARCH}/configs/${DEVICE_DEFCONFIG}" && git commit -m "defconfig: Regenerate"
     git clone --depth=1 "${AnyKernelRepo}" -b "${AnyKernelBranch}" "${AnyKernelPath}"
