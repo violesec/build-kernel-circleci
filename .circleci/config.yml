@@ -6,6 +6,7 @@ jobs:
     resource_class: large
 
     steps:
+      - checkout
       - run:
           name: Setup packages
           command: |
@@ -31,6 +32,17 @@ jobs:
             ccache -M 20G
             ccache -z
       - run:
+        name: Setup environment
+        command: |
+          cd $CIRCLE_WORKING_DIRECTORY
+          wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
+          source config.env
+      - run:
+          name: Test environment variables are set
+          command: |
+            echo "Kernel repo: $KERNEL_REPO"
+            echo "Kernel branch: $KERNEL_BRANCH"
+      - run:
           name: Clone kernel repo
           command: |
             cd $CIRCLE_WORKING_DIRECTORY
@@ -45,9 +57,9 @@ jobs:
           command: |
             cd $CIRCLE_WORKING_DIRECTORY/kernel
             wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
-            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/kranul-build.sh && chmod +x ./kranul-build.sh
+            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/kernel-build.sh && chmod +x ./kernel-build.sh
             echo "Building kernel"
-            ./kranul-build.sh
+            ./kernel-build.sh
       - run:
           name: Upload Build Artifacts to GoFile
           command: |
