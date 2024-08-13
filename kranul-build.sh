@@ -123,61 +123,17 @@ function compile_kernel() {
     CROSS_COMPILE=${CrossCompileFlag64} \
     CROSS_COMPILE_ARM32=${CrossCompileFlag32}
 
-    # if [[ -f "$KERNEL_IMAGE" ]]; then
-    #   cd ${MainPath}
-    #   git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    #   cp $IMAGE ${AnyKernelPath}
-    # else
-    #   echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
-    #   if [ "$CLEANUP" = "yes" ];then
-    #     cleanup
-    #   fi
-    #   exit 1
-    # fi
-
-  if [[ -f "out/arch/$ARCH/boot/Image.gz-dtb" ]]; then
-    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.gz-dtb"
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $IMAGE ${AnyKernelPath}
-    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
-  elif [[ -f "out/arch/$ARCH/boot/Image.gz" ]]; then
-    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.gz"
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $IMAGE ${AnyKernelPath}
-    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
-  elif [[ -f "out/arch/$ARCH/boot/Image" ]]; then
-    KERNEL_IMAGE="out/arch/$ARCH/boot/Image"
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $IMAGE ${AnyKernelPath}
-    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
-  elif [[ -f "out/arch/$ARCH/boot/Image.lz4" ]]; then
-    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.lz4"
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $IMAGE ${AnyKernelPath}
-    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
-  elif [[ -f "out/arch/$ARCH/boot/Image.lz4-dtb" ]]; then
-    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.lz4-dtb"
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $IMAGE ${AnyKernelPath}
-    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
-  elif [[ -f "out/arch/$ARCH/boot/Image.lz4-dtb" ]]; then
-    KERNEL_IMAGE="out/arch/$ARCH/boot/Image.lz4-dtb"
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $IMAGE ${AnyKernelPath}
-    echo "✅ Compile Kernel for $DEVICE_CODENAME successfully!"
-  else
-    echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
-    if [ "$CLEANUP" = "yes" ];then
-      cleanup
+    if [[ -f "$KERNEL_IMAGE" ]]; then
+      cd ${MainPath}
+      git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
+      cp $KERNEL_IMAGE ${AnyKernelPath}
+    else
+      echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
+      if [ "$CLEANUP" = "yes" ];then
+        cleanup
+      fi
+      exit 1
     fi
-    exit 1
-  fi
 }
 
 # function regenerate_config(){
