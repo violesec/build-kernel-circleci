@@ -1,40 +1,54 @@
 #!/usr/bin/env bash
 
+# Date and time for zip name
+DATE=$(date +"%Y%m%d-%H%M")
+DATE_ZIP=$(date +"%Y%m%d")
+DATE_LOG=$(date +"%Y-%m-%d %H:%M:%S")
+
 # Load variables from config.env
-export $(grep -v '^#' config.env | xargs)
+if [ -f config.env ]; then
+  source config.env
+else
+  echo "config.env not found!"
+  exit 1
+fi
 
 # Path
-MainPath="$(readlink -f -- $(pwd))"
-MainClangPath="${MainPath}/clang"
-AnyKernelPath="${MainPath}/anykernel"
-CrossCompileFlagTriple="aarch64-linux-gnu-"
-CrossCompileFlag64="aarch64-linux-gnu-"
-CrossCompileFlag32="arm-linux-gnueabi-"
+MAIN_PATH="$(readlink -f -- $(pwd))"
+MAIN_CLANG_PATH="${MAIN_PATH}/clang"
+ANYKERNEL_PATH="${MAIN_PATH}/anykernel"
+CROSS_COMPILE_FLAG_TRIPLE="aarch64-linux-gnu-"
+CROSS_COMPILE_FLAG_64="aarch64-linux-gnu-"
+CROSS_COMPILE_FLAG_32="arm-linux-gnueabi-"
 
-export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
-export KERNEL_IMAGE="${MainPath}/out/arch/${ARCH}/boot/Image.gz-dtb"
+# export SUBLEVEL="v4.14.$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
+export KERNEL_MAJOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "VERSION =" | sed 's/VERSION = *//g')
+export KERNEL_MINOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "PATCHLEVEL =" | sed 's/PATCHLEVEL = *//g')
+export KERNEL_SUBLEVEL_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')
+export KERNEL_VERSION="${KERNEL_MAJOR_VERSION}.${KERNEL_MINOR_VERSION}.${KERNEL_SUBLEVEL_VERSION}"
+export KERNEL_IMAGE="${MAIN_PATH}/out/arch/${ARCH}/boot/Image.gz-dtb"
 
 # Clone or update toolchain
 function clone_or_update_clang() {
   local CLANG_NAME=$1
-  local clang_path="${MainClangPath}-${CLANG_NAME}"
-  local git_repo=""
+  local CLANG_PATH="${MAIN_CLANG_PATH}-${CLANG_NAME}"
+  local GIT_REPO=""
 
   case $CLANG_NAME in
     "azure")
-      git_repo="https://gitlab.com/Panchajanya1999/azure-clang"
+      GIT_REPO="https://gitlab.com/Panchajanya1999/azure-clang"
       ;;
     "neutron"|"")
-      git_repo="https://github.com/Neutron-Toolchains/clang"
+      GIT_REPO="https://github.com/Neutron-Toolchains/clang"
       ;;
     "proton")
-      git_repo="https://github.com/kdrag0n/proton-clang"
+      GIT_REPO="https://github.com/kdrag0n/proton-clang"
       ;;
     "lilium")
-      git_repo="https://github.com/liliumproject/clang"
+      GIT_REPO="https://github.com/liliumproject/clang"
       ;;
     "zyc")
-      git_repo="$(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null)"
+      GIT_REPO="$(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null)"
       ;;
     *)
       echo "[!] Incorrect clang name. Check config.env for clang names."
@@ -42,10 +56,10 @@ function clone_or_update_clang() {
       ;;
   esac
 
-  if [ ! -f "${clang_path}/bin/clang" ]; then
+  if [ ! -f "${CLANG_PATH}/bin/clang" ]; then
     echo "[!] Clang is set to ${CLANG_NAME}, cloning it..."
-    git clone "${git_repo}" "${clang_path}" --depth=1
-    cd "${clang_path}"
+    git clone "${GIT_REPO}" "${CLANG_PATH}" --depth=1
+    cd "${CLANG_PATH}"
     curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
     chmod +x antman
     ./antman --patch=glibc
@@ -54,10 +68,10 @@ function clone_or_update_clang() {
     echo "[!] Clang already exists. Skipping..."
   fi
 
-  export PATH="${clang_path}/bin:${PATH}"
+  export PATH="${CLANG_PATH}/bin:${PATH}"
 
-  if [ ! -f "${clang_path}/bin/clang" ]; then
-    export KBUILD_COMPILER_STRING="$(${clang_path}/bin/clang --version | head -n 1)"
+  if [ ! -f "${CLANG_PATH}/bin/clang" ]; then
+    export KBUILD_COMPILER_STRING="$(${CLANG_PATH}/bin/clang --version | head -n 1)"
   else
     export KBUILD_COMPILER_STRING="Unknown"
   fi
@@ -66,9 +80,9 @@ function clone_or_update_clang() {
 # Update Clang
 function update_clang() {
   local CLANG_NAME=$1
-  local clang_path="${MainClangPath}-${CLANG_NAME}"
+  local CLANG_PATH="${MAIN_CLANG_PATH}-${CLANG_NAME}"
 
-  cd "${clang_path}"
+  cd "${CLANG_PATH}"
   git fetch -q origin main
   git pull origin main
   cd ..
@@ -76,7 +90,7 @@ function update_clang() {
 
 # Set defconfig
 function set_defconfig() {
-  if [ -f "${MainPath}/arch/$ARCH/configs/${DEVICE_DEFCONFIG}" ]; then
+  if [ -f "${MAIN_PATH}/arch/$ARCH/configs/${DEVICE_DEFCONFIG}" ]; then
     echo "[!] Using ${DEVICE_DEFCONFIG} as defconfig..."
   else
     echo "[!] ${DEVICE_DEFCONFIG} not found. Check config.env for correct defconfig."
@@ -88,13 +102,13 @@ function set_defconfig() {
 function kernelsu() {
   if [ "$KERNELSU" = "yes" ];then
     KERNEL_VARIANT="${KERNEL_VARIANT}-KernelSU"
-    if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
-      cd ${MainPath}
+    if [ ! -f "${MAIN_PATH}/KernelSU/README.md" ]; then
+      cd ${MAIN_PATH}
       curl -LSsk "https://raw.githubusercontent.com/orkunergun/KernelSU/main/kernel/setup.sh" | bash -s v0.9.6
       sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
     fi
     KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
-    git submodule update --init; cd ${MainPath}/KernelSU; git pull origin main; cd ..
+    git submodule update --init; cd ${MAIN_PATH}/KernelSU; git pull origin main; cd ..
   fi
 }
 
@@ -103,9 +117,9 @@ function compile_kernel() {
   local cores=$(nproc --all)
 
   if [ "$CLANG_NAME" = "proton" ]; then
-    sed -i 's/CONFIG_LLVM_POLLY=y/# CONFIG_LLVM_POLLY is not set/g' "${MainPath}/arch/$ARCH/configs/$DEVICE_DEFCONFIG" || echo ""
+    sed -i 's/CONFIG_LLVM_POLLY=y/# CONFIG_LLVM_POLLY is not set/g' "${MAIN_PATH}/arch/$ARCH/configs/$DEVICE_DEFCONFIG" || echo ""
   else
-    sed -i 's/# CONFIG_LLVM_POLLY is not set/CONFIG_LLVM_POLLY=y/g' "${MainPath}/arch/$ARCH/configs/$DEVICE_DEFCONFIG" || echo ""
+    sed -i 's/# CONFIG_LLVM_POLLY is not set/CONFIG_LLVM_POLLY=y/g' "${MAIN_PATH}/arch/$ARCH/configs/$DEVICE_DEFCONFIG" || echo ""
   fi
 
   make O=out ARCH=$ARCH $DEVICE_DEFCONFIG
@@ -119,16 +133,16 @@ function compile_kernel() {
     OBJCOPY=llvm-objcopy \
     OBJDUMP=llvm-objdump \
     STRIP=llvm-strip \
-    CLANG_TRIPLE=${CrossCompileFlagTriple} \
-    CROSS_COMPILE=${CrossCompileFlag64} \
-    CROSS_COMPILE_ARM32=${CrossCompileFlag32}
+    CLANG_TRIPLE=${CROSS_COMPILE_FLAG_TRIPLE} \
+    CROSS_COMPILE=${CROSS_COMPILE_FLAG_64} \
+    CROSS_COMPILE_ARM32=${CROSS_COMPILE_FLAG_32}
 }
 
 function get_anykernel() {
   if [[ -f "$KERNEL_IMAGE" ]]; then
-    cd ${MainPath}
-    git clone --depth=1 ${AnyKernelRepo} -b ${AnyKernelBranch} ${AnyKernelPath}
-    cp $KERNEL_IMAGE ${AnyKernelPath}
+    cd ${MAIN_PATH}
+    git clone --depth=1 ${ANYKERNEL_REPO} -b ${ANYKERNEL_BRANCH} ${ANYKERNEL_PATH}
+    cp $KERNEL_IMAGE ${ANYKERNEL_PATH}
   else
     echo "❌ Compile Kernel for $DEVICE_CODENAME failed, Check console log to fix it!"
     if [ "$CLEANUP" = "yes" ];then
@@ -140,25 +154,25 @@ function get_anykernel() {
 
 # Zip kernel
 function zip_kernel() {
-  cd "${AnyKernelPath}" || exit 1
+  cd "${ANYKERNEL_PATH}" || exit 1
 
   if [ "$KERNELSU" = "yes" ];then
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
+    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_VERSION} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
   else
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
+    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_VERSION} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
   fi
 
-  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${KERNEL_SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
+  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${KERNEL_VERSION}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
   cd ..
   mkdir -p builds
-  zipname="$(basename $(echo ${AnyKernelPath}/*.zip | sed "s/.zip//g"))"
-  cp "${AnyKernelPath}"/*.zip "./builds/${zipname}-$DATE.zip"
+  zipname="$(basename $(echo ${ANYKERNEL_PATH}/*.zip | sed "s/.zip//g"))"
+  cp "${ANYKERNEL_PATH}"/*.zip "./builds/${zipname}-$DATE.zip"
 }
 
 # Cleanup function
 function cleanup() {
-  cd "${MainPath}"
-  sudo rm -rf "${AnyKernelPath}"
+  cd "${MAIN_PATH}"
+  sudo rm -rf "${ANYKERNEL_PATH}"
   sudo rm -rf out/
 }
 
