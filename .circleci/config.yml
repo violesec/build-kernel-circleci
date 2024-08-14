@@ -31,6 +31,13 @@ jobs:
             ccache -M 20G
             ccache -z
       - run:
+          name: Setup environment
+          command: |
+            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
+            source config.env
+            echo "Environment setup test"
+            echo "Kernel repo: $KERNEL_REPO"
+      - run:
           name: Clone kernel repo
           command: |
             cd $CIRCLE_WORKING_DIRECTORY
