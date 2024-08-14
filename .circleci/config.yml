@@ -36,7 +36,8 @@ jobs:
             wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
             source config.env
             echo "Environment setup test"
-            echo "Kernel repo: $KERNEL_REPO"
+            echo "Kernel repo: ${KERNEL_REPO}"
+            echo "Kernel branch: $KERNEL_BRANCH"
       - run:
           name: Clone kernel repo
           command: |
