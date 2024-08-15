@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 # Date and time for zip name
-DATE=$(date +"%Y%m%d-%H%M")
-DATE_ZIP=$(date +"%Y%m%d")
+DATE=$(date +"%dd/%MM/%yy")
+DATE_START=$(date +"%d-%m-%Y - %H:%M:%S")
+DATE_TELEGRAM=$(date +"%d-%m-%Y - %H:%M:%S")
 DATE_LOG=$(date +"%Y-%m-%d %H:%M:%S")
 
 # Load variables from config.env
@@ -70,10 +71,7 @@ function clone_or_update_clang() {
   fi
 }
 
-export KERNEL_MAJOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "VERSION =" | sed 's/VERSION = *//g')
-export KERNEL_MINOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "PATCHLEVEL =" | sed 's/PATCHLEVEL = *//g')
-export KERNEL_SUBLEVEL_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')
-export KERNEL_VERSION="${KERNEL_MAJOR_VERSION}.${KERNEL_MINOR_VERSION}.${KERNEL_SUBLEVEL_VERSION}"
+export KERNEL_VERSION=$(make kernelversion 2>&1 | tail -n 1)
 export KERNEL_IMAGE="${MAIN_PATH}/out/arch/${ARCH}/boot/Image.gz-dtb"
 
 # Update Clang
@@ -134,9 +132,11 @@ function compile_kernel() {
     STRIP=llvm-strip \
     CLANG_TRIPLE=${CROSS_COMPILE_FLAG_TRIPLE} \
     CROSS_COMPILE=${CROSS_COMPILE_FLAG_64} \
-    CROSS_COMPILE_ARM32=${CROSS_COMPILE_FLAG_32}
+    CROSS_COMPILE_ARM32=${CROSS_COMPILE_FLAG_32} \
+    2>&1 | tee build.log
 }
 
+# Get AnyKernel
 function get_anykernel() {
   if [[ -f "$KERNEL_IMAGE" ]]; then
     cd ${MAIN_PATH}
@@ -161,12 +161,38 @@ function zip_kernel() {
     sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${KERNEL_VERSION} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
   fi
 
-  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${KERNEL_VERSION}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
+  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_VERSION}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
   cd ..
   mkdir -p builds
   zipname="$(basename $(echo ${ANYKERNEL_PATH}/*.zip | sed "s/.zip//g"))"
   cp "${ANYKERNEL_PATH}"/*.zip "./builds/${zipname}-$DATE.zip"
 }
+
+function zip_upload() {
+  ZIP_LINK=$(curl -s --upload-file "./builds/${zipname}-$DATE.zip" https://transfer.sh/"${zipname}-$DATE.zip")
+}
+
+# Telegram function to send messages to a channel or group chat (not tested)
+function telegram() {
+  if [ "$SEND_ANNOUNCEMENT" = "yes" ];then
+    curl -sLo telegram.sh https://raw.githubusercontent.com/fabianonline/telegram.sh/master/telegram
+    chmod +x telegram.sh
+    ./telegram.sh -t $TELEGRAM_TOKEN -c $TELEGRAM_CHAT_ID -M "
+      ✅ Build completed successfully in $((DIFF / 60)) minute(s) and $((DIFF % 60)) seconds
+      📅 Date: $DATE_TELEGRAM
+      🔨 Device: ${DEVICE_MODEL} (${DEVICE_CODENAME})
+      🔢 Version: ${KERNEL_VERSION}
+      📦 Variant: ${KERNEL_VARIANT}
+      👨‍💻 By: $KBUILD_BUILD_USER
+      📊 Compiler: $KBUILD_COMPILER_STRING
+      📁 Download: [Download Here]( $ZIP_LINK )
+    "
+  else
+    echo "Telegram is disabled"
+    echo "Build completed successfully in $((DIFF / 60)) minute(s) and $((DIFF % 60)) seconds"
+  fi
+}
+
 
 # Cleanup function
 function cleanup() {
