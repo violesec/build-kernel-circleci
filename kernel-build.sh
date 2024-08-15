@@ -1,19 +1,12 @@
 #!/usr/bin/env bash
 
 # Date and time for zip name
+TZ=Asia/Jakarta
 DATE=$(date +"%Y%m%d")
 DATE_ZIP=$(date +"%Y%m%d")
 DATE_START=$(date +"%d-%m-%Y - %H:%M:%S")
 DATE_TELEGRAM=$(date +"%d-%m-%Y - %H:%M:%S")
 DATE_LOG=$(date +"%Y-%m-%d %H:%M:%S")
-
-# Load variables from config.env
-if [ -f config.env ]; then
-  source config.env
-else
-  echo "config.env not found!"
-  exit 1
-fi
 
 # Path
 MAIN_PATH="$(readlink -f -- $(pwd))"
@@ -23,8 +16,17 @@ CROSS_COMPILE_FLAG_TRIPLE="aarch64-linux-gnu-"
 CROSS_COMPILE_FLAG_64="aarch64-linux-gnu-"
 CROSS_COMPILE_FLAG_32="arm-linux-gnueabi-"
 
+# Load variables from config.env
+if [ -f config.env ]; then
+  source config.env
+  export $(grep -v '^#' config.env | xargs)
+else
+  echo "config.env not found!"
+  exit 1
+fi
+
 # Clone or update toolchain
-function clone_or_update_clang() {
+function clone_clang() {
   local CLANG_NAME=$1
   local CLANG_PATH="${MAIN_CLANG_PATH}-${CLANG_NAME}"
   local GIT_REPO=""
@@ -42,6 +44,9 @@ function clone_or_update_clang() {
     "lilium")
       GIT_REPO="https://github.com/liliumproject/clang"
       ;;
+    "weebx")
+      GIT_REPO="$(curl -k https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/main/link.txt 2>/dev/null)"
+      ;;
     "zyc")
       GIT_REPO="$(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null)"
       ;;
@@ -53,12 +58,32 @@ function clone_or_update_clang() {
 
   if [ ! -f "${CLANG_PATH}/bin/clang" ]; then
     echo "[!] Clang is set to ${CLANG_NAME}, cloning it..."
-    git clone "${GIT_REPO}" "${CLANG_PATH}" --depth=1
-    cd "${CLANG_PATH}"
-    curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
-    chmod +x antman
-    ./antman --patch=glibc
-    cd ..
+    if ["$CLANG_NAME" = "lilium"];then
+      mkdir -p "${CLANG_PATH}"
+      cd "${CLANG_PATH}"
+      wget -q $(curl -sSL "https://api.github.com/repos/liliumproject/clang/releases/latest" | jq -r '.assets[0].browser_download_url') -O "lilium-clang.tar.gz"
+      tar -xf lilium-clang.tar.gz
+      rm -f lilium-clang.tar.gz
+    elif [ "$CLANG_NAME" = "weebx" ];then
+      mkdir -p "${CLANG_PATH}"
+      cd "${CLANG_PATH}"
+      wget -q $(curl -k https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/main/link.txt 2>/dev/null) -O "weebx-clang.tar.gz"
+      tar -xf weebx-clang.tar.gz
+      rm -f weebx-clang.tar.gz
+    elif [ "$CLANG_NAME" = "zyc" ];then
+      mkdir -p "${CLANG_PATH}"
+      cd "${CLANG_PATH}"
+      wget -q $(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
+      tar -xf zyc-clang.tar.gz
+      rm -f zyc-clang.tar.gz
+    else
+      git clone "${GIT_REPO}" "${CLANG_PATH}" --depth=1
+      cd "${CLANG_PATH}"
+      curl -LOk "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
+      chmod +x antman
+      ./antman --patch=glibc
+      cd ..
+    fi
   else
     echo "[!] Clang already exists. Skipping..."
   fi
@@ -80,10 +105,59 @@ function update_clang() {
   local CLANG_NAME=$1
   local CLANG_PATH="${MAIN_CLANG_PATH}-${CLANG_NAME}"
 
-  cd "${CLANG_PATH}"
-  git fetch -q origin main
-  git pull origin main
-  cd ..
+  if [ "$KERNEL_UPDATE" = "yes" ];then
+    if [ "$CLANG_NAME" = "azure" ] || ["$CLANG_NAME" = "proton"];then
+      echo "[!] Clang is set to [$CLANG_NAME], checking for updates..."
+      cd "${CLANG_PATH}"
+      git fetch -q origin main
+      git pull origin main
+      cd ..
+      echo "[!] Clang is up to date..."
+    elif [ "$CLANG_NAME" = "neutron"] || [ "$CLANG_NAME" = ""];then
+      echo "[!] Clang is set to [$CLANG_NAME], checking for updates..."
+      cd "${CLANG_PATH}"
+      git fetch -q origin main
+      git pull origin main
+      cd ..
+      echo "[!] Clang is up to date..."
+    elif [ "$CLANG_NAME" = "lilium" ];then
+      cd "${CLANG_PATH}"
+      RELEASE_URL="https://api.github.com/repos/liliumproject/clang/releases/latest"
+      RESOURCE_LINK=$(curl -sSL "$RELEASE_URL" | jq -r '.assets[0].browser_download_url')
+      if [ "$(cat README.md | grep "Build Date : " | cut -d: -f2 | sed "s/ //g")" != "${RESOURCE_LINK}" ]
+      then
+        echo "[!] Clang is outdated, updating..."
+        rm -rf ./*
+        wget -q $(curl -sSL "$RELEASE_URL" | jq -r '.assets[0].browser_download_url') -O "lilium-clang.tar.gz"
+        tar -xf lilium-clang.tar.gz
+        rm -f lilium-clang.tar.gz
+      else
+        echo "[!] Clang is up to date..."
+      fi
+    elif [ "$CLANG_NAME" = "weebx" ];then
+      echo "[!] Clang is set to [$CLANG_NAME], checking for updates..."
+      # cd "${CLANG_PATH}"
+      # git fetch -q origin main
+      # git pull origin main
+      # cd ..
+    elif [ "$CLANG_NAME" = "zyc" ];then
+      echo "[!] Clang is set to [$CLANG_NAME], checking for updates..."
+      cd "${CLANG_PATH}"
+      RESOURCE_LINK="$(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null)"
+      if [ "$(cat README.md | grep "Build Date : " | cut -d: -f2 | sed "s/ //g")" != "${RESOURCE_LINK}" ]
+      then
+        echo "[!] Clang is outdated, updating..."
+        rm -rf ./*
+        wget -q $(curl -k https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt 2>/dev/null) -O "zyc-clang.tar.gz"
+        tar -xf zyc-clang.tar.gz
+        rm -f zyc-clang.tar.gz
+      else
+        echo "[!] Clang is up to date..."
+      fi
+    fi
+  else
+    echo "[!] Kernel update is disabled..."
+  fi
 }
 
 # Set defconfig
@@ -178,7 +252,7 @@ function cleanup() {
 
 # Main script
 function main() {
-  clone_or_update_clang "$CLANG_NAME"
+  clone_clang "$CLANG_NAME"
   update_clang "$CLANG_NAME"
   set_defconfig
   kernelsu
