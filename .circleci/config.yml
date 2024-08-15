@@ -38,8 +38,8 @@ jobs:
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
           environment:
-            KERNEL_REPO: https://gitlab.com/MT6768Lab/KernelTree.git
-            KERNEL_BRANCH: 13
+            KERNEL_REPO: https://github.com/violesec/android_kernel_xiaomi_mt6768.git
+            KERNEL_BRANCH: suisei-13
       - run:
           name: Build
           command: |

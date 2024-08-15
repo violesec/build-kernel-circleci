@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # Date and time for zip name
-DATE=$(date +"%dd/%MM/%yy")
+DATE=$(date +"%Y%m%d")
+DATE_ZIP=$(date +"%Y%m%d")
 DATE_START=$(date +"%d-%m-%Y - %H:%M:%S")
 DATE_TELEGRAM=$(date +"%d-%m-%Y - %H:%M:%S")
 DATE_LOG=$(date +"%Y-%m-%d %H:%M:%S")
@@ -167,32 +168,6 @@ function zip_kernel() {
   zipname="$(basename $(echo ${ANYKERNEL_PATH}/*.zip | sed "s/.zip//g"))"
   cp "${ANYKERNEL_PATH}"/*.zip "./builds/${zipname}-$DATE.zip"
 }
-
-function zip_upload() {
-  ZIP_LINK=$(curl -s --upload-file "./builds/${zipname}-$DATE.zip" https://transfer.sh/"${zipname}-$DATE.zip")
-}
-
-# Telegram function to send messages to a channel or group chat (not tested)
-function telegram() {
-  if [ "$SEND_ANNOUNCEMENT" = "yes" ];then
-    curl -sLo telegram.sh https://raw.githubusercontent.com/fabianonline/telegram.sh/master/telegram
-    chmod +x telegram.sh
-    ./telegram.sh -t $TELEGRAM_TOKEN -c $TELEGRAM_CHAT_ID -M "
-      ✅ Build completed successfully in $((DIFF / 60)) minute(s) and $((DIFF % 60)) seconds
-      📅 Date: $DATE_TELEGRAM
-      🔨 Device: ${DEVICE_MODEL} (${DEVICE_CODENAME})
-      🔢 Version: ${KERNEL_VERSION}
-      📦 Variant: ${KERNEL_VARIANT}
-      👨‍💻 By: $KBUILD_BUILD_USER
-      📊 Compiler: $KBUILD_COMPILER_STRING
-      📁 Download: [Download Here]( $ZIP_LINK )
-    "
-  else
-    echo "Telegram is disabled"
-    echo "Build completed successfully in $((DIFF / 60)) minute(s) and $((DIFF % 60)) seconds"
-  fi
-}
-
 
 # Cleanup function
 function cleanup() {
