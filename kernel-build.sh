@@ -21,13 +21,6 @@ CROSS_COMPILE_FLAG_TRIPLE="aarch64-linux-gnu-"
 CROSS_COMPILE_FLAG_64="aarch64-linux-gnu-"
 CROSS_COMPILE_FLAG_32="arm-linux-gnueabi-"
 
-# export SUBLEVEL="v4.14.$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
-export KERNEL_MAJOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "VERSION =" | sed 's/VERSION = *//g')
-export KERNEL_MINOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "PATCHLEVEL =" | sed 's/PATCHLEVEL = *//g')
-export KERNEL_SUBLEVEL_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')
-export KERNEL_VERSION="${KERNEL_MAJOR_VERSION}.${KERNEL_MINOR_VERSION}.${KERNEL_SUBLEVEL_VERSION}"
-export KERNEL_IMAGE="${MAIN_PATH}/out/arch/${ARCH}/boot/Image.gz-dtb"
-
 # Clone or update toolchain
 function clone_or_update_clang() {
   local CLANG_NAME=$1
@@ -76,6 +69,12 @@ function clone_or_update_clang() {
     export KBUILD_COMPILER_STRING="Unknown"
   fi
 }
+
+export KERNEL_MAJOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "VERSION =" | sed 's/VERSION = *//g')
+export KERNEL_MINOR_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "PATCHLEVEL =" | sed 's/PATCHLEVEL = *//g')
+export KERNEL_SUBLEVEL_VERSION=$(cat "${MAIN_PATH}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')
+export KERNEL_VERSION="${KERNEL_MAJOR_VERSION}.${KERNEL_MINOR_VERSION}.${KERNEL_SUBLEVEL_VERSION}"
+export KERNEL_IMAGE="${MAIN_PATH}/out/arch/${ARCH}/boot/Image.gz-dtb"
 
 # Update Clang
 function update_clang() {

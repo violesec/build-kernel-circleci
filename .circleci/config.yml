@@ -31,14 +31,6 @@ jobs:
             ccache -M 20G
             ccache -z
       - run:
-          name: Setup environment
-          command: |
-            wget https://raw.githubusercontent.com/violesec/build-kernel-circleci/main/config.env
-            source config.env
-            echo "Environment setup test"
-            echo "Kernel repo: ${KERNEL_REPO}"
-            echo "Kernel branch: $KERNEL_BRANCH"
-      - run:
           name: Clone kernel repo
           command: |
             cd $CIRCLE_WORKING_DIRECTORY
@@ -46,8 +38,8 @@ jobs:
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
           environment:
-            KERNEL_REPO: https://github.com/violesec/android_kernel_xiaomi_mt6768_suichan.git
-            KERNEL_BRANCH: 14
+            KERNEL_REPO: https://gitlab.com/MT6768Lab/KernelTree.git
+            KERNEL_BRANCH: 13
       - run:
           name: Build
           command: |
